@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { devicePixelRatio } from 'svelte/reactivity/window'
 
   type Stroke = { color: string; width: number; points: { x: number; y: number }[] }
@@ -7,7 +8,8 @@
 
   let canvas: HTMLCanvasElement
   let size: DOMRectReadOnly | undefined = $state()
-  const strokes: Stroke[] = []
+  // Raw, so only reassigning the list is tracked; points pushed during a stroke stay plain.
+  let strokes: Stroke[] = $state.raw([])
   let active: Stroke | null = null
   let pointerId = -1
 
@@ -27,18 +29,40 @@
     ctx.stroke()
   }
 
+  function redraw() {
+    const ctx = canvas.getContext('2d')!
+    // Clear in device pixels; CSS units would miss part of the canvas when the pixel ratio is below 1.
+    ctx.save()
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.restore()
+    for (const stroke of strokes) draw(stroke)
+  }
+
   /** Sizes the backing store for crisp lines on high-DPI screens; resizing clears it, so redraw. */
   function resize(rect: DOMRectReadOnly, dpr: number) {
     canvas.width = Math.round(rect.width * dpr)
     canvas.height = Math.round(rect.height * dpr)
     canvas.getContext('2d')!.setTransform(dpr, 0, 0, dpr, 0, 0)
-    for (const stroke of strokes) draw(stroke)
+    redraw()
   }
 
   // Also reruns when only the pixel ratio changes, e.g. moving the window to another monitor.
+  // Untracked, so changes to `strokes` don't trigger a full redraw.
   $effect(() => {
-    if (size) resize(size, devicePixelRatio.current!)
+    const rect = size
+    const dpr = devicePixelRatio.current!
+    if (rect) untrack(() => resize(rect, dpr))
   })
+
+  export const canUndo = () => strokes.length > 0
+
+  // Ignored mid-stroke, e.g. when a second finger taps the toolbar.
+  export function undo() {
+    if (active || strokes.length === 0) return
+    strokes = strokes.slice(0, -1)
+    redraw()
+  }
 
   function toPoint(e: PointerEvent) {
     const rect = canvas.getBoundingClientRect()
@@ -50,7 +74,7 @@
     canvas.setPointerCapture(e.pointerId)
     pointerId = e.pointerId
     active = { color, width, points: [toPoint(e)] }
-    strokes.push(active)
+    strokes = [...strokes, active]
     draw(active)
   }
 

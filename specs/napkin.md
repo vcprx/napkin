@@ -4,7 +4,7 @@ A browser-based freehand drawing board.
 
 ## Stack
 
-Svelte 5 (runes) on plain Vite, TypeScript (strict), Tailwind CSS v4, HTML `<canvas>` 2D context, Pointer Events. Type checking with `svelte-check`. No tests.
+Svelte 5 (runes) on plain Vite, TypeScript (strict), Tailwind CSS v4, Lucide icons (`@lucide/svelte`), HTML `<canvas>` 2D context, Pointer Events. Type checking with `svelte-check`. No tests.
 
 | Script          | Purpose                    |
 |-----------------|----------------------------|
@@ -19,12 +19,12 @@ src/
   main.ts                  # mounts App
   app.css                  # @import 'tailwindcss'
   App.svelte               # owns brush state (color, width); composes Board + Toolbar
-  Board.svelte             # full-window canvas: drawing, resize, high-DPI
-  Toolbar.svelte           # color and line width pickers
-  BrushStyleButton.svelte  # 36×36 button used for toolbar triggers and swatches
+  Board.svelte             # full-window canvas: drawing, undo, resize, high-DPI
+  Toolbar.svelte           # undo, color and line width pickers
+  BrushStyleButton.svelte  # 36×36 button used for all toolbar buttons and swatches
 ```
 
-`App` holds `color` and `width` as `$state`. `Toolbar` binds to them (`bind:color`, `bind:width`), and `Board` receives them as props.
+`App` holds `color` and `width` as `$state`. `Toolbar` binds to them (`bind:color`, `bind:width`), and `Board` receives them as props. `Board` exports `undo` and `canUndo`; `App` reaches them through `bind:this` and passes them to `Toolbar` as `onundo` and `canUndo`.
 
 ## Features
 
@@ -38,6 +38,11 @@ src/
 - The stroke continues while the pointer is held, even outside the window, and ends cleanly on release or cancel.
 - Touch input draws instead of scrolling or zooming the page (`touch-action: none`).
 - Fast movement stays smooth: all coalesced pointer events are used when the browser provides them.
+
+### Undo
+
+- Undo permanently removes the most recent stroke. History is unlimited.
+- Undo is ignored while a stroke is in progress.
 
 ### Brush style
 
@@ -57,7 +62,8 @@ src/
 ### Toolbar
 
 - Floats at the bottom center of the window, over the canvas.
-- Two trigger buttons side by side: Color (a filled circle in the current color), then Line width (a bar at the current thickness, in the current color).
+- Buttons side by side: Undo (Lucide `undo-2` icon, `zinc-300`), Color (a filled circle in the current color), Line width (a bar at the current thickness, in the current color).
+- Undo is disabled (dimmed, no hover background) when there are no strokes.
 - Clicking a trigger toggles a popover above it, listing the 5 presets in a column with the same swatch style. Only one popover is open at a time.
 - Picking a preset selects it and closes the popover.
 - While a popover is open, pressing anywhere outside the toolbar closes it, and that press does not draw. Escape also closes it.
@@ -67,7 +73,8 @@ src/
 
 ### Accessibility
 
-- Triggers and swatches are `<button>` elements, reachable with Tab and operable with Enter and Space, with a visible focus ring.
+- Undo, triggers and swatches are `<button>` elements, reachable with Tab and operable with Enter and Space, with a visible focus ring. A disabled Undo is skipped by Tab.
+- Undo has `aria-label="Undo"`.
 
 ### Display
 
@@ -79,14 +86,17 @@ src/
 ## How drawing works
 
 - Strokes are kept as vector data (`{ color, width, points }`) in a list local to `Board`. A stroke is added to the list when it starts.
+- The list is `$state.raw` and only ever reassigned, so points pushed during a stroke are not tracked.
 - While drawing, only the new segment since the last pointer event is drawn onto the single canvas. Nothing is redrawn during a stroke.
-- On resize or a `devicePixelRatio` change, the backing store is resized, which clears it, and every stroke is redrawn from the list.
+- Undo drops the last stroke from the list, clears the canvas, and redraws every remaining stroke.
+- On resize or a `devicePixelRatio` change, the backing store is resized, which clears it, and every stroke is redrawn from the list. The resize effect reads the stroke list untracked, so adding a stroke does not trigger it.
 - A single-point stroke is drawn as a 0.01 px segment, because canvas skips zero-length segments and would otherwise draw nothing.
 
 ## Limitations
 
 - Each stroke is drawn segment by segment, so a future semi-transparent style would show darker overlaps at the joints.
 - Strokes live only in memory. Reloading the page clears the drawing.
-- Toolbar buttons have no accessible names: no `aria-label` (`Red`, `4 px`, …), no `role="group"` for Color and Line width, no `aria-expanded` on triggers, no `aria-pressed` on swatches. Screen readers announce unlabeled buttons.
+- No keyboard shortcut for undo.
+- Only Undo has an accessible name. The other toolbar buttons have no `aria-label` (`Red`, `4 px`, …), no `role="group"` for Color and Line width, no `aria-expanded` on triggers, no `aria-pressed` on swatches. Screen readers announce unlabeled buttons.
 - Popovers do not mark the selected preset; the current choice is only visible on the trigger.
-- Not built: undo/redo, eraser, shapes, text, selection, custom colors or widths, pan/zoom, saving, exporting, collaboration.
+- Not built: redo, eraser, shapes, text, selection, custom colors or widths, pan/zoom, saving, exporting, collaboration.

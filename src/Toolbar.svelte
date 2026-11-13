@@ -1,7 +1,13 @@
 <script lang="ts">
+  import Undo2 from '@lucide/svelte/icons/undo-2'
   import BrushStyleButton from './BrushStyleButton.svelte'
 
-  let { color = $bindable(), width = $bindable() }: { color: string; width: number } = $props()
+  let {
+    color = $bindable(),
+    width = $bindable(),
+    canUndo,
+    onundo,
+  }: { color: string; width: number; canUndo: boolean; onundo: () => void } = $props()
 
   const colors = ['#00e5ff', '#ff2bd6', '#39ff14', '#ffe600', '#ff7a00']
   const widths = [1, 2, 4, 8, 16]
@@ -41,6 +47,9 @@
   bind:this={toolbar}
   class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl bg-zinc-900 p-2 shadow-md ring-1 ring-white/10"
 >
+  <BrushStyleButton onclick={onundo} disabled={!canUndo} label="Undo">
+    <Undo2 class="size-5 text-zinc-300" />
+  </BrushStyleButton>
   <div class="relative">
     <BrushStyleButton onclick={() => toggle('color')}>{@render colorSwatch(color)}</BrushStyleButton>
     {#if open === 'color'}

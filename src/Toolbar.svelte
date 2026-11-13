@@ -3,12 +3,12 @@
 
   let { color = $bindable(), width = $bindable() }: { color: string; width: number } = $props()
 
-  const colors = ['#1e1e1e', '#e03131', '#1971c2', '#2f9e44', '#f08c00']
+  const colors = ['#00e5ff', '#ff2bd6', '#39ff14', '#ffe600', '#ff7a00']
   const widths = [1, 2, 4, 8, 16]
 
   // Opens above its trigger; mb-4 clears the toolbar's padding plus a gap.
   const drawer =
-    'absolute bottom-full left-1/2 mb-4 flex -translate-x-1/2 flex-col gap-1 rounded-xl bg-white p-2 shadow-md'
+    'absolute bottom-full left-1/2 mb-4 flex -translate-x-1/2 flex-col gap-1 rounded-xl bg-zinc-900 p-2 shadow-md ring-1 ring-white/10'
 
   let toolbar: HTMLDivElement
   let open: 'color' | 'width' | null = $state(null)
@@ -39,7 +39,7 @@
 
 <div
   bind:this={toolbar}
-  class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl bg-white p-2 shadow-md"
+  class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl bg-zinc-900 p-2 shadow-md ring-1 ring-white/10"
 >
   <div class="relative">
     <BrushStyleButton onclick={() => toggle('color')}>{@render colorSwatch(color)}</BrushStyleButton>

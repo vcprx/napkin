@@ -41,15 +41,15 @@ src/
 
 ### Brush style
 
-- **Color**, 5 presets, default Black:
+- **Color**, 5 neon presets, default Cyan:
 
-  | Name   | Value     |
-  |--------|-----------|
-  | Black  | `#1e1e1e` |
-  | Red    | `#e03131` |
-  | Blue   | `#1971c2` |
-  | Green  | `#2f9e44` |
-  | Orange | `#f08c00` |
+  | Name    | Value     |
+  |---------|-----------|
+  | Cyan    | `#00e5ff` |
+  | Magenta | `#ff2bd6` |
+  | Lime    | `#39ff14` |
+  | Yellow  | `#ffe600` |
+  | Orange  | `#ff7a00` |
 
 - **Line width**, 5 presets in CSS pixels, default 2: `1`, `2`, `4`, `8`, `16`.
 - A stroke takes the color and width selected when it starts. Changing the selection affects only new strokes. Existing strokes and a stroke in progress keep their style.
@@ -61,7 +61,8 @@ src/
 - Clicking a trigger toggles a popover above it, listing the 5 presets in a column with the same swatch style. Only one popover is open at a time.
 - Picking a preset selects it and closes the popover.
 - While a popover is open, pressing anywhere outside the toolbar closes it, and that press does not draw. Escape also closes it.
-- Buttons are 36×36 px with a gray hover background.
+- Dark surface (`zinc-900`) with a faint white ring, so it stands out from the background.
+- Buttons are 36×36 px with a lighter gray (`zinc-800`) hover background.
 - Clicking the toolbar never draws on the canvas.
 
 ### Accessibility
@@ -70,6 +71,7 @@ src/
 
 ### Display
 
+- Dark theme: the page behind the transparent canvas is near-black (`zinc-950`).
 - Lines are crisp on high-DPI screens: the canvas backing store is sized to `CSS size × devicePixelRatio`.
 - Resizing the window keeps every stroke at the same CSS-pixel position, including a stroke in progress.
 - A change of `devicePixelRatio` without a resize (for example, moving the window to another monitor) also resizes the backing store.
